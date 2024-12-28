@@ -12,138 +12,256 @@ import {
   Button,
   Card,
   CardContent,
+  TextField,
   Grid,
 } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import HomeIcon from "@mui/icons-material/Home";
+import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
+import HomeIcon from "@mui/icons-material/Home";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 const Dashboard = ({ onLogout }) => {
-  const [balance, setBalance] = useState(1000); // Initial balance in INR
-  const [transactionHistory, setTransactionHistory] = useState([]);
   const [selectedTab, setSelectedTab] = useState("Home");
-  const [currentUser, setCurrentUser] = useState({ username: "", email: "" });
+  const [balance, setBalance] = useState(0);
+  const [transactionHistory, setTransactionHistory] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [recipientUpi, setRecipientUpi] = useState("");
+  const [transferAmount, setTransferAmount] = useState("");
 
+  // Load user data on component mount
   useEffect(() => {
     const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
     if (loggedInUser) {
       setCurrentUser(loggedInUser);
+      const storedBalance = JSON.parse(localStorage.getItem(`${loggedInUser.username}_balance`)) || 1000;
+      const storedHistory = JSON.parse(localStorage.getItem(`${loggedInUser.username}_history`)) || [];
+      setBalance(storedBalance);
+      setTransactionHistory(storedHistory);
     }
   }, []);
 
-  const handleTransaction = (type) => {
-    const amount = prompt(`Enter amount to ${type} (in ₹)`);
-    if (amount && !isNaN(amount)) {
-      const updatedBalance =
-        type === "send" ? balance - parseInt(amount) : balance + parseInt(amount);
+  const handleSendMoney = () => {
+    const users = JSON.parse(localStorage.getItem("users")) || [];
+    const recipient = users.find((user) => user.upiId === recipientUpi);
 
-      if (updatedBalance >= 0) {
-        setBalance(updatedBalance);
-        setTransactionHistory([
-          ...transactionHistory,
-          { type, amount: parseInt(amount), date: new Date().toLocaleString() },
-        ]);
-      } else {
-        alert("Insufficient Balance!");
-      }
-    } else {
-      alert("Invalid Amount!");
+    if (!recipient) {
+      alert("Recipient UPI ID not found!");
+      return;
     }
+
+    const amount = parseInt(transferAmount);
+    if (!amount || amount <= 0 || balance < amount) {
+      alert("Invalid transaction amount or insufficient balance!");
+      return;
+    }
+
+    // Update sender's balance
+    const updatedSenderBalance = balance - amount;
+    setBalance(updatedSenderBalance);
+    localStorage.setItem(`${currentUser.username}_balance`, updatedSenderBalance);
+
+    // Update recipient's balance
+    const recipientBalance = parseInt(localStorage.getItem(`${recipient.username}_balance`) || 1000);
+    const updatedRecipientBalance = recipientBalance + amount;
+    localStorage.setItem(`${recipient.username}_balance`, updatedRecipientBalance);
+
+    // Update transaction history
+    const now = new Date().toLocaleString("en-IN");
+    const senderTransaction = {
+      type: "send",
+      amount,
+      to: recipientUpi,
+      dateTime: now,
+    };
+    const recipientTransaction = {
+      type: "receive",
+      amount,
+      from: currentUser.upiId,
+      dateTime: now,
+    };
+
+    const updatedHistory = [...transactionHistory, senderTransaction];
+    setTransactionHistory(updatedHistory);
+    localStorage.setItem(
+      `${currentUser.username}_history`,
+      JSON.stringify(updatedHistory)
+    );
+
+    const recipientHistory = JSON.parse(
+      localStorage.getItem(`${recipient.username}_history`) || "[]"
+    );
+    localStorage.setItem(
+      `${recipient.username}_history`,
+      JSON.stringify([...recipientHistory, recipientTransaction])
+    );
+
+    alert(`₹${amount} sent to ${recipient.username}`);
+    setRecipientUpi("");
+    setTransferAmount("");
   };
 
   const renderContent = () => {
-    if (selectedTab === "Home") {
-      return (
-        <Grid container spacing={3}>
-          <Grid item xs={12} sm={6}>
-            <Card sx={{ bgcolor: "primary.main", color: "#fff" }}>
-              <CardContent>
-                <Typography variant="h5" gutterBottom>
-                  Current Balance
+    switch (selectedTab) {
+      case "Home":
+        return (
+          <Grid container spacing={2}>
+            {/* Left Side: Text Content */}
+            <Grid item xs={12} sm={7}>
+              <Typography variant="h3" gutterBottom align="left">
+                Fast & Secure Online Payments
+              </Typography>
+              <Typography variant="body1" align="left" sx={{ mb: 4 }}>
+                Experience seamless transactions with PayEase. Whether you're a small
+                business or an enterprise, our platform offers the tools you need to
+                manage payments effortlessly.
+              </Typography>
+              <Card sx={{ p: 3 }}>
+                <Typography variant="h6" gutterBottom>
+                  Key Features:
                 </Typography>
-                <Typography variant="h3" fontWeight="bold">
-                  ₹{balance.toLocaleString("en-IN")}
-                </Typography>
-              </CardContent>
-            </Card>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                  <CheckCircleIcon color="primary" sx={{ mr: 1 }} />
+                  <Typography>Easy integration with your website or app</Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                  <CheckCircleIcon color="primary" sx={{ mr: 1 }} />
+                  <Typography>Accept payments globally in multiple currencies</Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                  <CheckCircleIcon color="primary" sx={{ mr: 1 }} />
+                  <Typography>Real-time transaction monitoring and analytics</Typography>
+                </Box>
+              </Card>
+            </Grid>
+
+            {/* Right Side: Image */}
+            <Grid item xs={12} sm={5}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: "100%",
+                }}
+              >
+                <img
+                  src="/images/mywallet.png" // Path to your image
+                  alt="My Wallet"
+                  style={{ width: "500px", height: "300px", objectFit: "cover" }}
+                />
+              </Box>
+            </Grid>
           </Grid>
-          <Grid item xs={12} sm={6}>
-            <Card>
-              <CardContent>
-                <Typography variant="h5" gutterBottom>
-                  Actions
-                </Typography>
-                <Box sx={{ mt: 2 }}>
-                  <Button
-                    variant="contained"
-                    color="success"
+        );
+
+      case "Transaction and Balance Enquiry":
+        return (
+          <Grid container spacing={3} sx={{ mt: 2 }}>
+            <Grid item xs={12} sm={6}>
+              <Card sx={{ bgcolor: "primary.main", color: "#fff" }}>
+                <CardContent>
+                  <Typography variant="h5" gutterBottom>
+                    Current Balance
+                  </Typography>
+                  <Typography variant="h3" fontWeight="bold">
+                    ₹{balance.toLocaleString("en-IN")}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h5" gutterBottom>
+                    Send Money
+                  </Typography>
+                  <TextField
+                    label="Recipient UPI ID"
+                    variant="outlined"
                     fullWidth
+                    value={recipientUpi}
+                    onChange={(e) => setRecipientUpi(e.target.value)}
                     sx={{ mb: 2 }}
-                    onClick={() => handleTransaction("receive")}
-                  >
-                    Receive Money
-                  </Button>
+                  />
+                  <TextField
+                    label="Amount (₹)"
+                    variant="outlined"
+                    fullWidth
+                    value={transferAmount}
+                    onChange={(e) => setTransferAmount(e.target.value)}
+                    sx={{ mb: 2 }}
+                  />
                   <Button
                     variant="contained"
-                    color="error"
+                    color="primary"
                     fullWidth
-                    onClick={() => handleTransaction("send")}
+                    onClick={handleSendMoney}
                   >
                     Send Money
                   </Button>
-                </Box>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </Grid>
           </Grid>
-        </Grid>
-      );
-    } else if (selectedTab === "Transaction Details") {
-      return (
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="h5" gutterBottom>
-            Transaction History
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-          {transactionHistory.length > 0 ? (
-            <List>
-              {transactionHistory.map((txn, index) => (
-                <ListItem key={index} divider>
-                  <ListItemText
-                    primary={`${txn.type.toUpperCase()} - ₹${txn.amount.toLocaleString(
-                      "en-IN"
-                    )}`}
-                    secondary={`Date: ${txn.date}`}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          ) : (
-            <Typography variant="body1" color="textSecondary">
-              No transactions yet.
+        );
+
+      case "Transaction Details":
+        return (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="h5">Transaction History</Typography>
+            <Divider sx={{ mb: 2 }} />
+            {transactionHistory.length > 0 ? (
+              transactionHistory.map((txn, index) => (
+                <Box key={index} sx={{ mb: 2 }}>
+                  <Typography variant="body1">
+                    {txn.type === "send"
+                      ? `Sent to ${txn.to}`
+                      : `Received from ${txn.from}`}
+                  </Typography>
+                  <Typography variant="body2">
+                    Amount: ₹{txn.amount.toLocaleString("en-IN")}, Date & Time:{" "}
+                    {txn.dateTime}
+                  </Typography>
+                  <Divider />
+                </Box>
+              ))
+            ) : (
+              <Typography variant="body1" color="textSecondary">
+                No transactions yet.
+              </Typography>
+            )}
+          </Box>
+        );
+
+      case "Profile":
+        if (!currentUser) {
+          return <Typography>Loading profile...</Typography>;
+        }
+        return (
+          <Box>
+            <Typography variant="h5">Profile</Typography>
+            <Typography variant="body1">
+              <strong>Username:</strong> {currentUser.username}
             </Typography>
-          )}
-        </Box>
-      );
-    } else if (selectedTab === "Profile") {
-      return (
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="h5">Profile</Typography>
-          <Typography variant="body1" sx={{ mt: 2 }}>
-            <strong>Username:</strong> {currentUser.username}
-          </Typography>
-          <Typography variant="body1" sx={{ mt: 1 }}>
-            <strong>Email:</strong> {currentUser.email}
-          </Typography>
-        </Box>
-      );
+            <Typography variant="body1">
+              <strong>Email:</strong> {currentUser.email}
+            </Typography>
+            <Typography variant="body1">
+              <strong>UPI ID:</strong> {currentUser.upiId}
+            </Typography>
+          </Box>
+        );
+
+      default:
+        return null;
     }
-    return <Typography variant="body1">Welcome to your dashboard!</Typography>;
   };
 
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
+      {/* Sidebar */}
       <Drawer
         variant="permanent"
         sx={{
@@ -171,6 +289,12 @@ const Dashboard = ({ onLogout }) => {
             </ListItemIcon>
             <ListItemText primary="Home" />
           </ListItem>
+          <ListItem button onClick={() => setSelectedTab("Transaction and Balance Enquiry")}>
+            <ListItemIcon>
+              <MonetizationOnIcon />
+            </ListItemIcon>
+            <ListItemText primary="Transaction and Balance Enquiry" />
+          </ListItem>
           <ListItem button onClick={() => setSelectedTab("Transaction Details")}>
             <ListItemIcon>
               <ReceiptIcon />
@@ -195,10 +319,9 @@ const Dashboard = ({ onLogout }) => {
           Logout
         </Button>
       </Drawer>
-      <Box sx={{ flexGrow: 1, p: 3 }}>
-        <Typography variant="h4" fontWeight="bold" sx={{ mb: 3 }}>
-          {selectedTab}
-        </Typography>
+
+      {/* Main Content */}
+      <Box sx={{ flexGrow: 1, p: 3, overflowY: "auto" }}>
         {renderContent()}
       </Box>
     </Box>
