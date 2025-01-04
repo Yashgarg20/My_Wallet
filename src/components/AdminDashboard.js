@@ -152,6 +152,9 @@ const AdminDashboard = () => {
                       <Typography fontWeight="bold">Username</Typography>
                     </TableCell>
                     <TableCell>
+                      <Typography fontWeight="bold">Password</Typography>
+                    </TableCell>
+                    <TableCell>
                       <Typography fontWeight="bold">Email</Typography>
                     </TableCell>
                     <TableCell>
@@ -170,6 +173,7 @@ const AdminDashboard = () => {
                     users.map((user) => (
                       <TableRow key={user._id}>
                         <TableCell>{user.username}</TableCell>
+                        <TableCell>{user.password}</TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>{user.upiId}</TableCell>
                         <TableCell>
@@ -189,7 +193,7 @@ const AdminDashboard = () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} align="center">
+                      <TableCell colSpan={6} align="center">
                         <Typography>No users found</Typography>
                       </TableCell>
                     </TableRow>
