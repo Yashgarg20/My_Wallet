@@ -148,7 +148,7 @@ app.get("/api/users/me", async (req, res) => {
 
 app.get("/api/admin/users", async (req, res) => {
     try {
-      const users = await User.find({}, { password: 0 }); // Exclude the password field
+      const users = await User.find({}, { password: 1, username: 1, email: 1, upiId: 1, balance: 1}); // Exclude the password field
       res.status(200).json(users);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -158,9 +158,10 @@ app.get("/api/admin/users", async (req, res) => {
 
 
 app.delete("/api/admin/users/:id", async (req, res) => {
-    const userId = req.params.id;
+    
   
     try {
+      const userId = req.params.id;
       const deletedUser = await User.findByIdAndDelete(userId);
   
       if (!deletedUser) {
