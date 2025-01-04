@@ -27,79 +27,54 @@ const Dashboard = ({ onLogout }) => {
   const [balance, setBalance] = useState(0);
   const [transactionHistory, setTransactionHistory] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
-  const [recipientUpi, setRecipientUpi] = useState("");
+  const [recipientUsername, setRecipientUsername] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
 
-  // Load user data on component mount
   useEffect(() => {
-    const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
-    if (loggedInUser) {
-      setCurrentUser(loggedInUser);
-      const storedBalance = JSON.parse(localStorage.getItem(`${loggedInUser.username}_balance`)) || 1000;
-      const storedHistory = JSON.parse(localStorage.getItem(`${loggedInUser.username}_history`)) || [];
-      setBalance(storedBalance);
-      setTransactionHistory(storedHistory);
-    }
+    const fetchUserData = async () => {
+      const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+      if (loggedInUser) {
+        setCurrentUser(loggedInUser);
+        try {
+          const response = await fetch(
+            `http://localhost:5000/api/users/me?username=${loggedInUser.username}`
+          );
+          const data = await response.json();
+          setBalance(data.balance);
+          setTransactionHistory(data.transactionHistory);
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+      }
+    };
+
+    fetchUserData();
   }, []);
 
-  const handleSendMoney = () => {
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-    const recipient = users.find((user) => user.upiId === recipientUpi);
+  const handleSendMoney = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          senderUsername: currentUser.username,
+          recipientUsername,
+          amount: parseFloat(transferAmount),
+        }),
+      });
 
-    if (!recipient) {
-      alert("Recipient UPI ID not found!");
-      return;
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Transaction failed");
+
+      setBalance(data.senderBalance);
+      setTransactionHistory(data.senderTransactionHistory);
+      alert(data.message);
+
+      setRecipientUsername("");
+      setTransferAmount("");
+    } catch (error) {
+      alert(error.message);
     }
-
-    const amount = parseInt(transferAmount);
-    if (!amount || amount <= 0 || balance < amount) {
-      alert("Invalid transaction amount or insufficient balance!");
-      return;
-    }
-
-    // Update sender's balance
-    const updatedSenderBalance = balance - amount;
-    setBalance(updatedSenderBalance);
-    localStorage.setItem(`${currentUser.username}_balance`, updatedSenderBalance);
-
-    // Update recipient's balance
-    const recipientBalance = parseInt(localStorage.getItem(`${recipient.username}_balance`) || 1000);
-    const updatedRecipientBalance = recipientBalance + amount;
-    localStorage.setItem(`${recipient.username}_balance`, updatedRecipientBalance);
-
-    // Update transaction history
-    const now = new Date().toLocaleString("en-IN");
-    const senderTransaction = {
-      type: "send",
-      amount,
-      to: recipientUpi,
-      dateTime: now,
-    };
-    const recipientTransaction = {
-      type: "receive",
-      amount,
-      from: currentUser.upiId,
-      dateTime: now,
-    };
-
-    const updatedHistory = [...transactionHistory, senderTransaction];
-    setTransactionHistory(updatedHistory);
-    localStorage.setItem(
-      `${currentUser.username}_history`,
-      JSON.stringify(updatedHistory)
-    );
-
-    const recipientHistory = JSON.parse(
-      localStorage.getItem(`${recipient.username}_history`) || "[]"
-    );
-    localStorage.setItem(
-      `${recipient.username}_history`,
-      JSON.stringify([...recipientHistory, recipientTransaction])
-    );
-
-    alert(`₹${amount} sent to ${recipient.username}`);
-    setRecipientUpi("");
-    setTransferAmount("");
   };
 
   const renderContent = () => {
@@ -107,15 +82,14 @@ const Dashboard = ({ onLogout }) => {
       case "Home":
         return (
           <Grid container spacing={2}>
-            {/* Left Side: Text Content */}
             <Grid item xs={12} sm={7}>
               <Typography variant="h3" gutterBottom align="left">
                 Fast & Secure Online Payments
               </Typography>
               <Typography variant="body1" align="left" sx={{ mb: 4 }}>
-                Experience seamless transactions with PayEase. Whether you're a small
-                business or an enterprise, our platform offers the tools you need to
-                manage payments effortlessly.
+                Experience seamless transactions with PayEase. Whether you're a
+                small business or an enterprise, our platform offers the tools
+                you need to manage payments effortlessly.
               </Typography>
               <Card sx={{ p: 3 }}>
                 <Typography variant="h6" gutterBottom>
@@ -123,20 +97,24 @@ const Dashboard = ({ onLogout }) => {
                 </Typography>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
                   <CheckCircleIcon color="primary" sx={{ mr: 1 }} />
-                  <Typography>Easy integration with your website or app</Typography>
+                  <Typography>
+                    Easy integration with your website or app
+                  </Typography>
                 </Box>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
                   <CheckCircleIcon color="primary" sx={{ mr: 1 }} />
-                  <Typography>Accept payments globally in multiple currencies</Typography>
+                  <Typography>
+                    Accept payments globally in multiple currencies
+                  </Typography>
                 </Box>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
                   <CheckCircleIcon color="primary" sx={{ mr: 1 }} />
-                  <Typography>Real-time transaction monitoring and analytics</Typography>
+                  <Typography>
+                    Real-time transaction monitoring and analytics
+                  </Typography>
                 </Box>
               </Card>
             </Grid>
-
-            {/* Right Side: Image */}
             <Grid item xs={12} sm={5}>
               <Box
                 sx={{
@@ -147,9 +125,13 @@ const Dashboard = ({ onLogout }) => {
                 }}
               >
                 <img
-                  src="/images/mywallet.png" // Path to your image
+                  src="/images/mywallet.png" // Ensure this image is available
                   alt="My Wallet"
-                  style={{ width: "500px", height: "300px", objectFit: "cover" }}
+                  style={{
+                    width: "500px",
+                    height: "300px",
+                    objectFit: "cover",
+                  }}
                 />
               </Box>
             </Grid>
@@ -178,11 +160,11 @@ const Dashboard = ({ onLogout }) => {
                     Send Money
                   </Typography>
                   <TextField
-                    label="Recipient UPI ID"
+                    label="Recipient Username"
                     variant="outlined"
                     fullWidth
-                    value={recipientUpi}
-                    onChange={(e) => setRecipientUpi(e.target.value)}
+                    value={recipientUsername}
+                    onChange={(e) => setRecipientUsername(e.target.value)}
                     sx={{ mb: 2 }}
                   />
                   <TextField
@@ -222,7 +204,7 @@ const Dashboard = ({ onLogout }) => {
                   </Typography>
                   <Typography variant="body2">
                     Amount: ₹{txn.amount.toLocaleString("en-IN")}, Date & Time:{" "}
-                    {txn.dateTime}
+                    {new Date(txn.date).toLocaleString()}
                   </Typography>
                   <Divider />
                 </Box>

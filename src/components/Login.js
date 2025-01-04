@@ -4,70 +4,69 @@ import { TextField, Button, Typography, Box, Divider } from "@mui/material";
 
 const Login = ({ setIsAuthenticated, setIsAdmin }) => {
   const [formData, setFormData] = useState({
-    usernameOrEmail: "",
-    password: "",
+    username: "",
     email: "",
+    password: "",
+    usernameOrEmail: "",
   });
   const [isRegistering, setIsRegistering] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(""); // State to store error message
   const navigate = useNavigate();
 
-  const getUsers = () => JSON.parse(localStorage.getItem("users")) || [];
-
-  const saveUser = (user) => {
-    const users = getUsers();
-    users.push(user);
-    localStorage.setItem("users", JSON.stringify(users));
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const users = getUsers();
 
     if (isRegistering) {
-      if (users.some((user) => user.username === formData.username)) {
-        alert("Username already exists. Please choose another.");
-        return;
-      }
+      // Register a new user
+      try {
+        const response = await fetch("http://localhost:5000/api/users/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: formData.username,
+            email: formData.email,
+            password: formData.password,
+          }),
+        });
 
-      if (users.some((user) => user.email === formData.email)) {
-        alert("Email already exists. Please use a different email.");
-        return;
-      }
+        const data = await response.json();
 
-      const upiId = `${formData.username}@payment`;
-      saveUser({ ...formData, upiId });
-      alert("User Registered Successfully! You can now log in.");
-      setIsRegistering(false);
+        if (!response.ok) {
+          throw new Error(data.message || "Registration failed");
+        }
+
+        alert(data.message); // Success message
+        setIsRegistering(false); // Switch back to login
+        setErrorMessage(""); // Clear any existing error message
+      } catch (error) {
+        setErrorMessage(error.message); // Set error message for duplicate username/email
+      }
     } else {
-      // Admin login check
-      if (formData.usernameOrEmail === "admin" && formData.password === "admin123") {
-        setIsAuthenticated(true);
-        setIsAdmin(true);
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("isAdmin", "true");
-        alert("Admin Login Successful");
-        navigate("/admin");
-        return;
-      }
+      // Login an existing user
+      try {
+        const response = await fetch("http://localhost:5000/api/users/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            usernameOrEmail: formData.usernameOrEmail,
+            password: formData.password,
+          }),
+        });
 
-      // User login check (by username or email)
-      const user = users.find(
-        (user) =>
-          (user.username === formData.usernameOrEmail ||
-            user.email === formData.usernameOrEmail) &&
-          user.password === formData.password
-      );
+        const data = await response.json();
 
-      if (user) {
+        if (!response.ok) {
+          throw new Error(data.message || "Login failed");
+        }
+
+        // Save user authentication state
         setIsAuthenticated(true);
-        setIsAdmin(false);
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("isAdmin", "false");
-        localStorage.setItem("loggedInUser", JSON.stringify(user));
-        alert("Login Successful");
-        navigate("/dashboard");
-      } else {
-        alert("Invalid Credentials");
+        setIsAdmin(data.isAdmin);
+        localStorage.setItem("loggedInUser", JSON.stringify(data.user));
+        navigate(data.isAdmin ? "/admin" : "/dashboard");
+        setErrorMessage(""); // Clear any existing error message
+      } catch (error) {
+        setErrorMessage(error.message); // Display login error message
       }
     }
   };
@@ -77,6 +76,16 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
       <Typography variant="h4" gutterBottom align="center">
         {isRegistering ? "Register" : "Login"}
       </Typography>
+      {errorMessage && ( // Show error message if it exists
+        <Typography
+          variant="body1"
+          color="error"
+          align="center"
+          sx={{ mb: 2 }}
+        >
+          {errorMessage}
+        </Typography>
+      )}
       <form onSubmit={handleSubmit}>
         {isRegistering ? (
           <>
@@ -160,7 +169,10 @@ const Login = ({ setIsAuthenticated, setIsAdmin }) => {
         <Button
           variant="text"
           color="secondary"
-          onClick={() => setIsRegistering(!isRegistering)}
+          onClick={() => {
+            setIsRegistering(!isRegistering);
+            setErrorMessage(""); // Clear error message when toggling
+          }}
         >
           {isRegistering ? "Login here" : "Register now"}
         </Button>
