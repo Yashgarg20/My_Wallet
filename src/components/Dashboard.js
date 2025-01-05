@@ -21,7 +21,27 @@ import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import HomeIcon from "@mui/icons-material/Home";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import { Line } from "react-chartjs-2";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const Dashboard = ({ onLogout }) => {
   const [selectedTab, setSelectedTab] = useState("Home");
@@ -30,7 +50,7 @@ const Dashboard = ({ onLogout }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [recipientIdentifier, setRecipientIdentifier] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
-  const [transferMode, setTransferMode] = useState("upiId"); // Default to UPI ID
+  const [transferMode, setTransferMode] = useState("upiId");
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -74,17 +94,48 @@ const Dashboard = ({ onLogout }) => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Transaction failed");
 
-      // Update frontend with real-time changes
       setBalance(data.senderBalance);
       setTransactionHistory(data.senderTransactionHistory);
       alert(data.message);
 
-      // Reset form fields
       setRecipientIdentifier("");
       setTransferAmount("");
     } catch (error) {
       alert(error.message);
     }
+  };
+
+  const renderTransactionGraph = () => {
+    const labels = transactionHistory.map((txn) =>
+      new Date(txn.date).toLocaleDateString()
+    );
+    const data = {
+      labels,
+      datasets: [
+        {
+          label: "Transaction Amount",
+          data: transactionHistory.map((txn) => txn.amount),
+          fill: false,
+          borderColor: "rgba(75, 192, 192, 1)",
+          tension: 0.1,
+        },
+      ],
+    };
+
+    const options = {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "top",
+        },
+        title: {
+          display: true,
+          text: "Transaction History Overview",
+        },
+      },
+    };
+
+    return <Line data={data} options={options} />;
   };
 
   const renderContent = () => {
@@ -106,38 +157,15 @@ const Dashboard = ({ onLogout }) => {
                   Key Features:
                 </Typography>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                  <CheckCircleIcon color="primary" sx={{ mr: 1 }} />
                   <Typography>Easy integration with your website or app</Typography>
                 </Box>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                  <CheckCircleIcon color="primary" sx={{ mr: 1 }} />
                   <Typography>Accept payments globally in multiple currencies</Typography>
                 </Box>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                  <CheckCircleIcon color="primary" sx={{ mr: 1 }} />
                   <Typography>Real-time transaction monitoring and analytics</Typography>
                 </Box>
               </Card>
-            </Grid>
-            <Grid item xs={12} sm={5}>
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  height: "100%",
-                }}
-              >
-                <img
-                  src="/images/mywallet.png"
-                  alt="My Wallet"
-                  style={{
-                    width: "500px",
-                    height: "300px",
-                    objectFit: "cover",
-                  }}
-                />
-              </Box>
             </Grid>
           </Grid>
         );
@@ -204,44 +232,43 @@ const Dashboard = ({ onLogout }) => {
           </Grid>
         );
 
-        case "Transaction Details":
-  return (
-    <Box sx={{ mt: 2 }}>
-      <Typography variant="h5">Transaction History</Typography>
-      <Divider sx={{ mb: 2 }} />
-      {transactionHistory.length > 0 ? (
-        transactionHistory.map((txn, index) => (
-          <Box key={index} sx={{ mb: 2 }}>
-            <Typography variant="body1">
-              {txn.type === "send"
-                ? `Sent to UPI ID: ${txn.to || "Unknown"}`
-                : `Received from UPI ID: ${txn.from || "Unknown"}`}
-            </Typography>
-            <Typography variant="body2">
-              Amount: ₹{(txn.amount || 0).toLocaleString("en-IN")}
-            </Typography>
-            <Typography variant="body2">
-              Date & Time: {new Date(txn.date || Date.now()).toLocaleString()}
-            </Typography>
-            <Divider />
+      case "Transaction Details":
+        return (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="h5">Transaction History</Typography>
+            <Divider sx={{ mb: 2 }} />
+            {transactionHistory.length > 0 ? (
+              <>
+                {transactionHistory.map((txn, index) => (
+                  <Box key={index} sx={{ mb: 2 }}>
+                    <Typography variant="body1">
+                      {txn.type === "send"
+                        ? `Sent to ${txn.to || "Unknown"} (UPI ID: ${txn.toUpiId || "N/A"})`
+                        : `Received from ${txn.from || "Unknown"} (UPI ID: ${
+                            txn.senderUpiId || "N/A"
+                          })`}
+                    </Typography>
+                    <Typography variant="body2">
+                      Amount: ₹{txn.amount.toLocaleString("en-IN")}
+                    </Typography>
+                    <Typography variant="body2">
+                      Date & Time: {new Date(txn.date).toLocaleString()}
+                    </Typography>
+                    <Divider />
+                  </Box>
+                ))}
+                <Box sx={{ mt: 4 }}>{renderTransactionGraph()}</Box>
+              </>
+            ) : (
+              <Typography variant="body1" color="textSecondary">
+                No transactions yet.
+              </Typography>
+            )}
           </Box>
-        ))
-      ) : (
-        <Typography variant="body1" color="textSecondary">
-          No transactions yet.
-        </Typography>
-      )}
-    </Box>
-  );
-
-
-        
+        );
 
       case "Profile":
-        if (!currentUser) {
-          return <Typography>Loading profile...</Typography>;
-        }
-        return (
+        return currentUser ? (
           <Box>
             <Typography variant="h5">Profile</Typography>
             <Typography variant="body1">
@@ -254,6 +281,8 @@ const Dashboard = ({ onLogout }) => {
               <strong>UPI ID:</strong> {currentUser.upiId}
             </Typography>
           </Box>
+        ) : (
+          <Typography>Loading profile...</Typography>
         );
 
       default:
