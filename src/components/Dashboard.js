@@ -14,6 +14,7 @@ import {
   CardContent,
   TextField,
   Grid,
+  MenuItem,
 } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
@@ -27,8 +28,9 @@ const Dashboard = ({ onLogout }) => {
   const [balance, setBalance] = useState(0);
   const [transactionHistory, setTransactionHistory] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
-  const [recipientUsername, setRecipientUsername] = useState("");
+  const [recipientIdentifier, setRecipientIdentifier] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
+  const [transferMode, setTransferMode] = useState("upiId"); // Default to UPI ID
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -52,13 +54,19 @@ const Dashboard = ({ onLogout }) => {
   }, []);
 
   const handleSendMoney = async () => {
+    if (!recipientIdentifier || !transferAmount || parseFloat(transferAmount) <= 0) {
+      alert("Please enter a valid recipient and amount.");
+      return;
+    }
+
     try {
       const response = await fetch("http://localhost:5000/api/transactions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          senderUsername: currentUser.username,
-          recipientUsername,
+          senderIdentifier: currentUser.username,
+          recipientIdentifier,
+          transferMode,
           amount: parseFloat(transferAmount),
         }),
       });
@@ -66,11 +74,13 @@ const Dashboard = ({ onLogout }) => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Transaction failed");
 
+      // Update frontend with real-time changes
       setBalance(data.senderBalance);
       setTransactionHistory(data.senderTransactionHistory);
       alert(data.message);
 
-      setRecipientUsername("");
+      // Reset form fields
+      setRecipientIdentifier("");
       setTransferAmount("");
     } catch (error) {
       alert(error.message);
@@ -97,21 +107,15 @@ const Dashboard = ({ onLogout }) => {
                 </Typography>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
                   <CheckCircleIcon color="primary" sx={{ mr: 1 }} />
-                  <Typography>
-                    Easy integration with your website or app
-                  </Typography>
+                  <Typography>Easy integration with your website or app</Typography>
                 </Box>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
                   <CheckCircleIcon color="primary" sx={{ mr: 1 }} />
-                  <Typography>
-                    Accept payments globally in multiple currencies
-                  </Typography>
+                  <Typography>Accept payments globally in multiple currencies</Typography>
                 </Box>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
                   <CheckCircleIcon color="primary" sx={{ mr: 1 }} />
-                  <Typography>
-                    Real-time transaction monitoring and analytics
-                  </Typography>
+                  <Typography>Real-time transaction monitoring and analytics</Typography>
                 </Box>
               </Card>
             </Grid>
@@ -125,7 +129,7 @@ const Dashboard = ({ onLogout }) => {
                 }}
               >
                 <img
-                  src="/images/mywallet.png" // Ensure this image is available
+                  src="/images/mywallet.png"
                   alt="My Wallet"
                   style={{
                     width: "500px",
@@ -160,11 +164,22 @@ const Dashboard = ({ onLogout }) => {
                     Send Money
                   </Typography>
                   <TextField
-                    label="Recipient Username"
+                    select
+                    fullWidth
+                    label="Transfer Mode"
+                    value={transferMode}
+                    onChange={(e) => setTransferMode(e.target.value)}
+                    sx={{ mb: 2 }}
+                  >
+                    <MenuItem value="upiId">UPI ID</MenuItem>
+                    <MenuItem value="username">Username</MenuItem>
+                  </TextField>
+                  <TextField
+                    label={`Recipient (${transferMode === "upiId" ? "UPI ID" : "Username"})`}
                     variant="outlined"
                     fullWidth
-                    value={recipientUsername}
-                    onChange={(e) => setRecipientUsername(e.target.value)}
+                    value={recipientIdentifier}
+                    onChange={(e) => setRecipientIdentifier(e.target.value)}
                     sx={{ mb: 2 }}
                   />
                   <TextField
@@ -189,33 +204,38 @@ const Dashboard = ({ onLogout }) => {
           </Grid>
         );
 
-      case "Transaction Details":
-        return (
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="h5">Transaction History</Typography>
-            <Divider sx={{ mb: 2 }} />
-            {transactionHistory.length > 0 ? (
-              transactionHistory.map((txn, index) => (
-                <Box key={index} sx={{ mb: 2 }}>
-                  <Typography variant="body1">
-                    {txn.type === "send"
-                      ? `Sent to ${txn.to}`
-                      : `Received from ${txn.from}`}
-                  </Typography>
-                  <Typography variant="body2">
-                    Amount: ₹{txn.amount.toLocaleString("en-IN")}, Date & Time:{" "}
-                    {new Date(txn.date).toLocaleString()}
-                  </Typography>
-                  <Divider />
-                </Box>
-              ))
-            ) : (
-              <Typography variant="body1" color="textSecondary">
-                No transactions yet.
-              </Typography>
-            )}
+        case "Transaction Details":
+  return (
+    <Box sx={{ mt: 2 }}>
+      <Typography variant="h5">Transaction History</Typography>
+      <Divider sx={{ mb: 2 }} />
+      {transactionHistory.length > 0 ? (
+        transactionHistory.map((txn, index) => (
+          <Box key={index} sx={{ mb: 2 }}>
+            <Typography variant="body1">
+              {txn.type === "send"
+                ? `Sent to UPI ID: ${txn.to || "Unknown"}`
+                : `Received from UPI ID: ${txn.from || "Unknown"}`}
+            </Typography>
+            <Typography variant="body2">
+              Amount: ₹{(txn.amount || 0).toLocaleString("en-IN")}
+            </Typography>
+            <Typography variant="body2">
+              Date & Time: {new Date(txn.date || Date.now()).toLocaleString()}
+            </Typography>
+            <Divider />
           </Box>
-        );
+        ))
+      ) : (
+        <Typography variant="body1" color="textSecondary">
+          No transactions yet.
+        </Typography>
+      )}
+    </Box>
+  );
+
+
+        
 
       case "Profile":
         if (!currentUser) {
@@ -243,7 +263,6 @@ const Dashboard = ({ onLogout }) => {
 
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
-      {/* Sidebar */}
       <Drawer
         variant="permanent"
         sx={{
@@ -271,7 +290,10 @@ const Dashboard = ({ onLogout }) => {
             </ListItemIcon>
             <ListItemText primary="Home" />
           </ListItem>
-          <ListItem button onClick={() => setSelectedTab("Transaction and Balance Enquiry")}>
+          <ListItem
+            button
+            onClick={() => setSelectedTab("Transaction and Balance Enquiry")}
+          >
             <ListItemIcon>
               <MonetizationOnIcon />
             </ListItemIcon>
@@ -302,10 +324,7 @@ const Dashboard = ({ onLogout }) => {
         </Button>
       </Drawer>
 
-      {/* Main Content */}
-      <Box sx={{ flexGrow: 1, p: 3, overflowY: "auto" }}>
-        {renderContent()}
-      </Box>
+      <Box sx={{ flexGrow: 1, p: 3, overflowY: "auto" }}>{renderContent()}</Box>
     </Box>
   );
 };

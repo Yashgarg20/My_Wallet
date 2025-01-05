@@ -30,8 +30,9 @@ const userSchema = new mongoose.Schema({
     {
       type: { type: String, enum: ["send", "receive"], required: true },
       amount: { type: Number, required: true },
-      to: String,
-      from: String,
+      to: String, // Recipient's UPI ID or username
+      from: String, // Sender's UPI ID or username
+      senderUpiId: String, // Explicit sender UPI ID
       date: { type: Date, default: Date.now },
     },
   ],
@@ -176,52 +177,80 @@ app.delete("/api/admin/users/:id", async (req, res) => {
 });
   
 // Perform a transaction
+
 app.post("/api/transactions", async (req, res) => {
-  const { senderUsername, recipientUsername, amount } = req.body;
+  const { senderIdentifier, recipientIdentifier, transferMode, amount } = req.body;
 
   try {
-    const sender = await User.findOne({ username: senderUsername });
-    const recipient = await User.findOne({ username: recipientUsername });
+    if (!senderIdentifier || !recipientIdentifier || !amount || amount <= 0) {
+      return res.status(400).json({ message: "Invalid transaction data" });
+    }
 
-    if (!sender || !recipient) {
-      return res.status(404).json({ message: "Sender or recipient not found" });
+    const sender = await User.findOne({
+      $or: [{ username: senderIdentifier }, { upiId: senderIdentifier }],
+    });
+
+    const recipient = await User.findOne({
+      $or: [{ username: recipientIdentifier }, { upiId: recipientIdentifier }],
+    });
+
+    if (!sender) {
+      return res.status(404).json({ message: "Sender not found" });
+    }
+
+    if (!recipient) {
+      return res.status(404).json({ message: "Recipient not found" });
     }
 
     if (sender.balance < amount) {
       return res.status(400).json({ message: "Insufficient balance" });
     }
 
+    // Deduct amount from sender and update balance
     sender.balance -= amount;
-    recipient.balance += amount;
-
-    const now = new Date();
     sender.transactionHistory.push({
       type: "send",
       amount,
-      to: recipient.upiId,
-      date: now,
+      to: recipient.upiId, // Receiver's UPI ID
+      date: new Date(),
     });
 
+    // Credit amount to recipient and update balance
+    recipient.balance += amount;
     recipient.transactionHistory.push({
       type: "receive",
       amount,
-      from: sender.upiId,
-      date: now,
+      from: sender.upiId, // Sender's UPI ID
+      date: new Date(),
     });
 
+    // Save updates to database
     await sender.save();
     await recipient.save();
 
     res.status(200).json({
-      message: "Transaction successful",
+      message: `Transaction successful: ₹${amount} transferred`,
       senderBalance: sender.balance,
       senderTransactionHistory: sender.transactionHistory,
     });
   } catch (error) {
-    console.error("Error processing transaction:", error);
-    res.status(500).json({ message: "Error processing transaction" });
+    console.error("Transaction error:", error);
+    res.status(500).json({ message: "Transaction failed" });
   }
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Start the server
 const PORT = 5000;
