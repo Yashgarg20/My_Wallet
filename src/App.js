@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import Dashboard from "./components/Dashboard";
 import Login from "./components/Login";
@@ -22,34 +22,39 @@ function App() {
     localStorage.setItem("isAdmin", isAdmin);
   }, [isAuthenticated, isAdmin]);
 
+  const handleLogout = () => {
+    console.log("Logout triggered"); // Debugging log
+    setIsAuthenticated(false);
+    setIsAdmin(false);
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("isAdmin");
+    localStorage.removeItem("loggedInUser");
+  };
+
+  const renderHomeRedirect = useMemo(() => {
+    if (isAuthenticated) {
+      return isAdmin ? <Navigate to="/admin" /> : <Navigate to="/dashboard" />;
+    }
+    return (
+      <Login
+        setIsAuthenticated={setIsAuthenticated}
+        setIsAdmin={setIsAdmin}
+      />
+    );
+  }, [isAuthenticated, isAdmin]);
+
   return (
     <Router>
       <Routes>
         {/* Home Route */}
-        <Route
-          path="/"
-          element={
-            isAuthenticated ? (
-              isAdmin ? (
-                <Navigate to="/admin" />
-              ) : (
-                <Navigate to="/dashboard" />
-              )
-            ) : (
-              <Login
-                setIsAuthenticated={setIsAuthenticated}
-                setIsAdmin={setIsAdmin}
-              />
-            )
-          }
-        />
+        <Route path="/" element={renderHomeRedirect} />
 
         {/* Dashboard Route */}
         <Route
           path="/dashboard"
           element={
             isAuthenticated && !isAdmin ? (
-              <Dashboard onLogout={() => setIsAuthenticated(false)} />
+              <Dashboard onLogout={handleLogout} />
             ) : (
               <Navigate to="/" />
             )
@@ -61,7 +66,7 @@ function App() {
           path="/admin"
           element={
             isAuthenticated && isAdmin ? (
-              <AdminDashboard />
+              <AdminDashboard onLogout={handleLogout} />
             ) : (
               <Navigate to="/" />
             )

@@ -16,9 +16,11 @@ import {
   DialogActions,
   Card,
   CardContent,
+  AppBar,
+  Toolbar,
 } from "@mui/material";
 
-const AdminDashboard = () => {
+const AdminDashboard = ({ onLogout }) => {
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -100,6 +102,21 @@ const AdminDashboard = () => {
         alignItems: "center",
       }}
     >
+      <AppBar position="static" sx={{ mb: 4 }}>
+        <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+          <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+            Admin Dashboard
+          </Typography>
+          <Button
+            color="inherit"
+            variant="outlined"
+            onClick={onLogout}
+            sx={{ border: "1px solid white" }}
+          >
+            Logout
+          </Button>
+        </Toolbar>
+      </AppBar>
       <Card
         sx={{
           width: "100%",
@@ -115,7 +132,7 @@ const AdminDashboard = () => {
             gutterBottom
             sx={{ textAlign: "center", fontWeight: "bold" }}
           >
-            Admin Dashboard
+            User Management
           </Typography>
           <Typography
             variant="subtitle1"

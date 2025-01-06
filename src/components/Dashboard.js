@@ -167,6 +167,26 @@ const Dashboard = ({ onLogout }) => {
                 </Box>
               </Card>
             </Grid>
+            <Grid item xs={12} sm={5}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: "100%",
+                }}
+              >
+                <img
+                  src="/images/mywallet.png"
+                  alt="My Wallet"
+                  style={{
+                    width: "500px",
+                    height: "300px",
+                    objectFit: "cover",
+                  }}
+                />
+              </Box>
+            </Grid>
           </Grid>
         );
 
@@ -243,10 +263,8 @@ const Dashboard = ({ onLogout }) => {
                   <Box key={index} sx={{ mb: 2 }}>
                     <Typography variant="body1">
                       {txn.type === "send"
-                        ? `Sent to ${txn.to || "Unknown"} (UPI ID: ${txn.toUpiId || "N/A"})`
-                        : `Received from ${txn.from || "Unknown"} (UPI ID: ${
-                            txn.senderUpiId || "N/A"
-                          })`}
+                        ? `Sent to ${txn.to || "Unknown"}`
+                        : `Received from ${txn.from || "Unknown"}`}
                     </Typography>
                     <Typography variant="body2">
                       Amount: ₹{txn.amount.toLocaleString("en-IN")}
