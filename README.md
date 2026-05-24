@@ -1,70 +1,556 @@
-# Getting Started with Create React App
+# 📱 Digital Payment Wallet System using MERN Stack
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A secure and user-friendly Digital Payment Wallet web application developed using the MERN Stack (MongoDB, Express.js, React.js, and Node.js). The application allows users to register, log in, generate unique UPI IDs, send and receive money, maintain wallet balance, and track transactions in real time. An Admin Dashboard is also included for monitoring users, balances, and transaction history.
 
-## Available Scripts
+This project simulates the core functionality of modern digital payment platforms such as Paytm, PhonePe, and Google Pay.
 
-In the project directory, you can run:
+---
 
-### `npm start`
+# 📌 Table of Contents
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- Project Overview
+- Objectives
+- Features
+- Technology Stack
+- System Architecture
+- Workflow
+- Frontend Description
+- Backend Description
+- Database Design
+- API Endpoints
+- Installation & Setup
+- Project Screens
+- Future Enhancements
+- Learning Outcomes
+- Conclusion
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+---
 
-### `npm test`
+# 🚀 Project Overview
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+The Digital Payment Wallet System is a full-stack web application that enables users to perform secure digital transactions through a wallet-based payment system.
 
-### `npm run build`
+The application provides:
+- User Authentication
+- UPI ID Generation
+- Peer-to-peer Transactions
+- Wallet Balance Management
+- Transaction Tracking
+- Admin Monitoring
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+The project demonstrates full-stack web development concepts including frontend-backend integration, REST APIs, authentication, database management, and transaction processing.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+---
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+# 🎯 Objectives of the Project
 
-### `npm run eject`
+The primary objectives of this project are:
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+- To create a secure online wallet system
+- To implement peer-to-peer money transfer functionality
+- To maintain transaction records and wallet balances
+- To understand frontend-backend communication
+- To implement REST APIs using Node.js and Express.js
+- To learn MongoDB database operations
+- To develop a responsive and interactive user interface
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+---
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+# ✨ Features
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## 👤 User Features
 
-## Learn More
+### 🔐 Authentication
+- User Registration
+- User Login
+- Logout Functionality
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### 💳 Wallet Functionalities
+- Automatic UPI ID Generation
+- Wallet Balance Display
+- Send Money
+- Receive Money
+- Request Money
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### 📜 Transaction Management
+- Transaction History
+- Date & Time Tracking
+- Real-Time Balance Updates
 
-### Code Splitting
+### 📊 Analytics
+- Transaction Graph Visualization using Chart.js
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### 👤 Profile Management
+- Username
+- Email
+- UPI ID
 
-### Analyzing the Bundle Size
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## 👨‍💼 Admin Features
 
-### Making a Progressive Web App
+- Admin Login
+- View All Registered Users
+- Monitor User Wallet Balances
+- Monitor Transaction Histories
+- Delete Users
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+---
 
-### Advanced Configuration
+# 🛠️ Technology Stack
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## Frontend Technologies
 
-### Deployment
+| Technology | Purpose |
+|------------|---------|
+| React.js | User Interface |
+| Material UI | UI Components & Styling |
+| React Router DOM | Page Routing |
+| Chart.js | Transaction Graphs |
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+---
 
-### `npm run build` fails to minify
+## Backend Technologies
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+| Technology | Purpose |
+|------------|---------|
+| Node.js | Server Runtime |
+| Express.js | API Development |
+| REST APIs | Client-Server Communication |
+
+---
+
+## Database Technologies
+
+| Technology | Purpose |
+|------------|---------|
+| MongoDB | Database |
+| Mongoose | MongoDB Object Modeling |
+
+---
+
+# 🏗️ System Architecture
+
+```text
+Frontend (React.js)
+        ↓
+HTTP Requests (REST APIs)
+        ↓
+Backend Server (Node.js + Express.js)
+        ↓
+MongoDB Database
+```
+
+---
+
+# ⚙️ Working Workflow of the Project
+
+---
+
+## 🟢 Step 1: User Registration
+
+### Process:
+1. User enters:
+   - Username
+   - Email
+   - Password
+
+2. Frontend sends request to backend:
+```javascript
+fetch("http://localhost:5000/api/users/register")
+```
+
+3. Backend:
+   - Validates data
+   - Checks duplicate users
+   - Generates UPI ID
+
+```javascript
+const upiId = `${username}@payment`;
+```
+
+4. Data stored in MongoDB
+
+---
+
+## 🟢 Step 2: Login
+
+### Process:
+1. User enters credentials
+2. Backend validates user
+3. User session stored in localStorage
+
+```javascript
+localStorage.setItem("loggedInUser", JSON.stringify(user));
+```
+
+---
+
+## 🟢 Step 3: Dashboard Loading
+
+### Process:
+1. React fetches user data
+2. Backend returns:
+   - Balance
+   - UPI ID
+   - Transaction history
+
+---
+
+## 🟢 Step 4: Send Money
+
+### Process:
+1. User enters:
+   - Recipient UPI ID
+   - Amount
+
+2. Frontend sends POST request
+
+```javascript
+fetch("http://localhost:5000/api/transactions")
+```
+
+3. Backend:
+   - Finds sender
+   - Finds receiver
+   - Checks balance
+   - Deducts amount
+   - Credits recipient
+   - Updates transaction history
+
+---
+
+## 🟢 Step 5: Transaction History
+
+Every transaction stores:
+- Type
+- Amount
+- Sender
+- Receiver
+- Date & Time
+
+Displayed dynamically in dashboard.
+
+---
+
+## 🟢 Step 6: Admin Monitoring
+
+Admin can:
+- View all users
+- View balances
+- Monitor transactions
+- Delete users
+
+---
+
+# 💻 Frontend Description
+
+The frontend is developed using React.js.
+
+## React Concepts Used
+
+### useState
+Stores dynamic data.
+
+```javascript
+const [balance, setBalance] = useState(0);
+```
+
+---
+
+### useEffect
+Fetches data when page loads.
+
+```javascript
+useEffect(() => {
+  fetchUserData();
+}, []);
+```
+
+---
+
+### React Router DOM
+Used for navigation between:
+- Login
+- Dashboard
+- Admin Dashboard
+
+---
+
+## Material UI Components Used
+
+| Component | Purpose |
+|-----------|---------|
+| Drawer | Sidebar Navigation |
+| Card | Display Wallet Data |
+| Typography | Text Styling |
+| Button | User Actions |
+| Grid | Responsive Layout |
+| Avatar | User/Profile Icon |
+
+---
+
+# 🔙 Backend Description
+
+Backend is developed using:
+- Node.js
+- Express.js
+
+The backend handles:
+- Authentication
+- APIs
+- Transactions
+- Database operations
+- Validation
+
+---
+
+# 🗄️ Database Design
+
+## MongoDB Database
+
+Database Name:
+```text
+wallet
+```
+
+---
+
+## User Schema
+
+```javascript
+const userSchema = new mongoose.Schema({
+  username: String,
+  email: String,
+  password: String,
+  role: String,
+  balance: Number,
+  upiId: String,
+  transactionHistory: []
+});
+```
+
+---
+
+## Transaction History Schema
+
+```javascript
+transactionHistory: [
+  {
+    type: String,
+    amount: Number,
+    to: String,
+    from: String,
+    date: Date
+  }
+]
+```
+
+---
+
+# 📡 API Endpoints
+
+## User APIs
+
+### Register User
+```http
+POST /api/users/register
+```
+
+### Login User
+```http
+POST /api/users/login
+```
+
+### Fetch User Data
+```http
+GET /api/users/me
+```
+
+---
+
+## Transaction APIs
+
+### Send Money
+```http
+POST /api/transactions
+```
+
+---
+
+## Admin APIs
+
+### Fetch All Users
+```http
+GET /api/admin/users
+```
+
+### Delete User
+```http
+DELETE /api/admin/users/:id
+```
+
+---
+
+# ⚙️ Installation & Setup
+
+---
+
+## 🔹 Clone Repository
+
+```bash
+git clone <repository-url>
+cd My_Wallet
+```
+
+---
+
+# 📦 Backend Setup
+
+## Navigate to backend folder
+
+```bash
+cd backend
+```
+
+## Install dependencies
+
+```bash
+npm install
+```
+
+## Install Required Packages
+
+```bash
+npm install express mongoose cors body-parser nodemon
+```
+
+## Start Backend Server
+
+```bash
+node server.js
+```
+
+OR
+
+```bash
+nodemon server.js
+```
+
+Backend runs on:
+```text
+http://localhost:5000
+```
+
+---
+
+# 💻 Frontend Setup
+
+## Navigate to frontend folder
+
+```bash
+cd frontend
+```
+
+## Install dependencies
+
+```bash
+npm install
+```
+
+## Install Required Packages
+
+```bash
+npm install @mui/material @emotion/react @emotion/styled
+npm install @mui/icons-material
+npm install react-router-dom
+npm install react-chartjs-2 chart.js
+```
+
+## Start React Application
+
+```bash
+npm start
+```
+
+Frontend runs on:
+```text
+http://localhost:3000
+```
+
+---
+
+# 🗄️ MongoDB Setup
+
+Install MongoDB locally or use MongoDB Atlas.
+
+MongoDB Connection:
+
+```javascript
+mongoose.connect("mongodb://127.0.0.1:27017/wallet")
+```
+
+---
+
+# 📈 Graph Visualization
+
+Transaction analytics are displayed using Chart.js.
+
+Features:
+- Transaction Amount Graph
+- Date-wise Tracking
+- Visual Analytics
+
+---
+
+# 🔥 Key Concepts Used
+
+- MERN Stack Development
+- REST APIs
+- CRUD Operations
+- Authentication
+- React Hooks
+- State Management
+- MongoDB Schema Design
+- Client-Server Architecture
+
+---
+
+# ⚠️ Current Limitations
+
+- Passwords are not encrypted
+- No JWT Authentication
+- No OTP Verification
+- No Payment Gateway Integration
+
+---
+
+# 🚀 Future Enhancements
+
+- JWT Authentication
+- bcrypt Password Encryption
+- QR Code Payments
+- Razorpay/Stripe Integration
+- Email Notifications
+- OTP Verification
+- Push Notifications
+- MongoDB Transactions
+
+---
+
+# 📚 Learning Outcomes
+
+This project helped in understanding:
+- Full-Stack MERN Development
+- Frontend-Backend Integration
+- REST API Development
+- MongoDB Database Operations
+- Transaction Processing
+- Authentication & Authorization
+- Real-Time UI Updates
+
+---
+
+# 📌 Conclusion
+
+The Digital Payment Wallet System successfully demonstrates the implementation of a secure and scalable digital transaction platform using the MERN stack. The project provides practical experience in frontend-backend integration, REST APIs, database management, authentication, and real-time transaction processing. It also simulates the core functionality of real-world digital payment applications.
